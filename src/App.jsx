@@ -4,37 +4,10 @@ import React, { useEffect, useState } from "react";
 
 function App() {
   const [pokemonData, setPokemonData] = useState([]);
-  // const [loadMore, setLoadMore] = useState(
-  //   "https://pokeapi.co/api/v2/pokemon?limit=20"
-  // );
-
-  // const getPokemonData = async () => {
-  //   const res = await fetch(loadMore);
-  //   const data = await res.json();
-
-  //   setLoadMore(data.next);
-
-  //   function createPokemonObject(results) {
-  //     results.forEach(async (pokemon) => {
-  //       const res = await fetch(
-  //         `https://pokeapi.co/api/v2/pokemon/${pokemon.name}`
-  //       );
-  //       const data = await res.json();
-
-  //       setPokemonData((currentData) => [...currentData, data]);
-  //     });
-  //   }
-  //   createPokemonObject(data.results);
-  //   await console.log(pokemonData);
-  // };
-
-  // useEffect(() => {
-  //   getPokemonData();
-  // }, []);
 
   const [filteredPokemonData, setFilteredPokemonData] = useState([]);
 
-  const [activePokemon, setActivePokemon] = useState(2);
+  const [activePokemon, setActivePokemon] = useState(0);
 
   //Function for fetching pokemon data
   const getPokemonData = (pokemonUrl, index) => {
@@ -110,10 +83,61 @@ function App() {
     let pokemon = pokemonData[activePokemon];
 
     const img_url = pokemon.sprites.other["official-artwork"].front_default;
+
     const getPokemonTypes = () => {
       return pokemon.types.map((val) => {
         return <span>{val.type.name}</span>;
       });
+    };
+
+    const getPokemonStats = () => {
+      let baseStat = [];
+      let totalStatVal = 0;
+
+      baseStat = pokemon.stats.map((val, index) => {
+        const statName = [
+          "HP",
+          "Attack",
+          "Defense",
+          "Sp. Atk",
+          "Sp. Def",
+          "Speed",
+        ];
+        const barWidth = (val.base_stat / 255) * 100;
+
+        totalStatVal += val.base_stat;
+
+        return (
+          <tr>
+            <td className="stat-name">{statName[index]}</td>
+            <td className="stat-val">{val.base_stat}</td>
+            <td>
+              <div
+                className={`stat-bar ${
+                  val.base_stat > 149
+                    ? `ultimate-high`
+                    : val.base_stat > 124
+                    ? `very-high`
+                    : val.base_stat > 99
+                    ? `high`
+                    : ``
+                }`}
+                style={{ width: `${barWidth}%` }}
+              ></div>
+            </td>
+          </tr>
+        );
+      });
+
+      baseStat.push(
+        <tr>
+          <td className="stat-name">Total</td>
+          <td className="stat-val total">{totalStatVal}</td>
+          <td></td>
+        </tr>
+      );
+
+      return baseStat;
     };
 
     return (
@@ -128,13 +152,14 @@ function App() {
         </p>
         <h2 className="pokemon-name">{pokemon.forms[0].name}</h2>
         <p className="pokemon-type">{getPokemonTypes()}</p>
+        <table className="pokemon-stats-container">{getPokemonStats()}</table>
       </div>
     );
   };
 
   //Fetch all pokemon data (name & API url)
   useEffect(() => {
-    Axios.get(`https://pokeapi.co/api/v2/pokemon?limit=151`).then((res) => {
+    Axios.get(`https://pokeapi.co/api/v2/pokemon?limit=386`).then((res) => {
       const data = res.data.results;
       console.log(data);
 
