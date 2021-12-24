@@ -6,17 +6,17 @@ function App() {
   const [pokemonData, setPokemonData] = useState([]);
 
   const [filteredPokemonData, setFilteredPokemonData] = useState([]);
-
+  const [searchValue, setSearchValue] = useState("");
   const [activePokemon, setActivePokemon] = useState(0);
 
-  //Function for fetching pokemon data
-  const getPokemonData = (pokemonUrl, index) => {
+  //Function to fetch pokemon data
+  const getPokemonData = (pokemonUrl) => {
     Axios.get(pokemonUrl).then((res) => {
       setPokemonData((currentData) => [...currentData, res.data]);
-      // console.log(res.data.forms[0].name)
     });
   };
 
+  //fetched data is not sorted, so data need to be sorted here:
   useEffect(() => {
     pokemonData.sort((a, b) => a.id - b.id);
 
@@ -24,21 +24,16 @@ function App() {
     setFilteredPokemonData([...arr]);
   }, [pokemonData]);
 
-  //Function for handling search
   const searchHandler = (event) => {
-    let filteredData = [];
-    let searchValue = event.target.value;
-    filteredData = pokemonData.filter((val) => {
-      if (searchValue === "" || isNaN(searchValue)) {
-        return val.forms[0].name.includes(searchValue.toLowerCase());
-      } else {
-        return val.id == searchValue;
-      }
-    });
-    setFilteredPokemonData([...filteredData]);
+    setSearchValue(event.target.value);
+  };
 
-    console.log(pokemonData);
-    console.log(event.target.value.toLowerCase());
+  const searchPokemon = () => {
+    Axios.get(`https://pokeapi.co/api/v2/pokemon/${searchValue}`).then(
+      (res) => {
+        setActivePokemon(res.data);
+      }
+    );
   };
 
   //Render all Pokemon cards
@@ -53,24 +48,14 @@ function App() {
           return <span>{val.type.name}</span>;
         });
       };
-      // const img_color =
 
       return (
-        <div
-          className="pokemon-card"
-          onClick={() => setActivePokemon(pokemon.id - 1)}
-        >
+        <div className="pokemon-card" onClick={() => setActivePokemon(pokemon)}>
           <div
             className="pokemon-img"
             style={{ backgroundImage: img_url }}
           ></div>
-          <p className="pokemon-id">
-            {pokemon.id < 100
-              ? pokemon.id < 10
-                ? `#00${pokemon.id}`
-                : `#0${pokemon.id}`
-              : `#${pokemon.id}`}
-          </p>
+          <p className="pokemon-id">#{pokemon.id}</p>
           <h3 className="pokemon-name">{pokemon.forms[0].name}</h3>
           <p className="pokemon-type">{getPokemonTypes()}</p>
         </div>
@@ -80,9 +65,7 @@ function App() {
 
   //Render selected pokemon
   const renderSelectedPokemon = () => {
-    let pokemon = pokemonData[activePokemon];
-
-    const img_url = pokemon.sprites.other["official-artwork"].front_default;
+    let pokemon = activePokemon;
 
     const getPokemonTypes = () => {
       return pokemon.types.map((val) => {
@@ -142,14 +125,12 @@ function App() {
 
     return (
       <div className="selected-pokemon-container">
-        <img className="pokemon-img-artwork" src={img_url} alt="" />
-        <p className="pokemon-id">
-          {pokemon.id < 100
-            ? pokemon.id < 10
-              ? `#00${pokemon.id}`
-              : `#0${pokemon.id}`
-            : `#${pokemon.id}`}
-        </p>
+        <img
+          className="pokemon-img-artwork"
+          src={pokemon.sprites.other["official-artwork"].front_default}
+          alt=""
+        />
+        <p className="pokemon-id">#{pokemon.id}</p>
         <h2 className="pokemon-name">{pokemon.forms[0].name}</h2>
         <p className="pokemon-type">{getPokemonTypes()}</p>
         <table className="pokemon-stats-container">{getPokemonStats()}</table>
@@ -157,14 +138,39 @@ function App() {
     );
   };
 
-  //Fetch all pokemon data (name & API url)
-  useEffect(() => {
-    Axios.get(`https://pokeapi.co/api/v2/pokemon?limit=386`).then((res) => {
+  const [offset, setOffset] = useState(9);
+  const [loadPokemon, setLoadPokemon] = useState(false);
+
+  const loadMore = () => {
+    setLoadPokemon(true);
+
+    Axios.get(
+      `https://pokeapi.co/api/v2/pokemon?limit=9&offset=${offset}`
+    ).then((res) => {
       const data = res.data.results;
       console.log(data);
 
       data.forEach((val, index) => {
         getPokemonData(val.url, index);
+      });
+
+      setOffset(offset + 9);
+      setLoadPokemon(false);
+    });
+  };
+
+  //Fetch all pokemon data (name & API url)
+  useEffect(() => {
+    Axios.get(`https://pokeapi.co/api/v2/pokemon?limit=9)`).then((res) => {
+      const data = res.data.results;
+      console.log(data);
+
+      data.forEach((val, index) => {
+        getPokemonData(val.url, index);
+      });
+
+      Axios.get(`https://pokeapi.co/api/v2/pokemon/1`).then((res) => {
+        setActivePokemon(res.data);
       });
     });
   }, []);
@@ -181,9 +187,9 @@ function App() {
               name="searchBar"
               onChange={searchHandler}
               id="search-bar"
-              placeholder="Search Pokémon by name or number"
+              placeholder="Search Pokémon by name or id"
             />
-            <button className="search-button">
+            <button className="search-button" onClick={searchPokemon}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -197,9 +203,14 @@ function App() {
             </button>
           </div>
 
-          <div className="card-container">{renderAllPokemon()}</div>
+          <div className="card-container">
+            {renderAllPokemon()}
+            <button className="load-more" onClick={loadMore}>
+              {`${loadPokemon ? "Loading..." : "Load More"}`}
+            </button>
+          </div>
         </div>
-        {pokemonData[activePokemon] && renderSelectedPokemon()}
+        {activePokemon && renderSelectedPokemon()}
       </div>
     </div>
   );

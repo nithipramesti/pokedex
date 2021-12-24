@@ -58,11 +58,16 @@ h1 {
   height: 40px;
   width: 40px;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-#search-bar:focus ~ .search-button {
-  box-shadow: 0px 0px 12px 2px rgba(226, 52, 13, 0.3);
+.search-button:hover {
+  box-shadow: 0px 0px 8px 2px rgba(226, 52, 13, 0.3);
 }
+
+/* #search-bar:focus ~ .search-button {
+  box-shadow: 0px 0px 12px 2px rgba(226, 52, 13, 0.3);
+} */
 
 #search-bar::placeholder {
   color: #969fac;
@@ -141,6 +146,20 @@ h1 {
   padding: 3px 9px;
   border-radius: 25px;
 }
+button.load-more {
+  grid-column: 2/3;
+  border: none;
+  background-color: #5a6a8f;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button.load-more:hover {
+  background-color: #415177;
+}
 
 /* SELECTED POKEMON */
 .selected-pokemon-container {
@@ -206,4 +225,8 @@ h1 {
 
 .stat-bar.ultimate-high {
   background-color: rgb(74, 211, 204);
+}
+
+.hidden {
+  display: none;
 }
